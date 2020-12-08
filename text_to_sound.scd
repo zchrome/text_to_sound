@@ -5,6 +5,8 @@
 ~alphabetArray = Array.fill(~alphabet.size, {arg i, index; ~alphabet[i]});
 )
 
+// Unix commands to generate sound files: only for initial use
+
 (
 {
 	var alph;
@@ -26,27 +28,34 @@
 // Note: say outputs soound files at half of 44.1k Hz sample rate (22kHz)... upsample!
 
 // Load sound files into arrayed buffers (?) in alphabetical order
+// How allocate bufnums explicilty (ensure consistent execution) ?
+// Run this first (allocate buffers)
 
 (
 ~alphabet = "abcdefghijklmnopqrstuvwxyz";
 Buffer.freeAll;
 ~alphabet.do({
 	|item, index|
-	Buffer.readChannel(s, "/Users/xarch/Ljud/Projects/Text Synthesis/alphabet files/vicki/" ++ item ++ ".aiff", channels: 0);
+	Buffer.readChannel(s, File.getcwd ++ "/sound files/vicki/" ++ item ++ ".aiff", channels: 0);
 });
 )
 
 // ALLOCATE BUFFNUMS TO AN ARRAY
 
 // Bus Setup and allocation (please store in env variable)
+// Can be run with rest b/c explicit bus numbers
+
+// MAIN
+
 (
 ~audioBus1 = Bus.new(rate: 'audio', index: 4, numChannels: 1, server: s); // Explicit index!!!
 ~audioBus2 = Bus.new(rate: 'audio', index: 5, numChannels: 1, server: s); // Explicit index!!!
 ~audioBus2.index;
-)
+
 
 // SynthDef that plays the letter it is given
-(
+
+
 SynthDef(\letter, {
 	|letter, dur, out = 0, amp, rate = 0.5, freq = 440, sustain = 0.5, release = 0.5, trig = 1|
 	var sig, chooseBuf, graintrig, env;
@@ -56,23 +65,15 @@ SynthDef(\letter, {
 	sig = GrainSin.ar(numChannels: 1, trigger: graintrig, dur: 0.5, freq: freq, envbufnum: chooseBuf); // DO NOT EXPAND HERE
 	Out.ar(out, sig);
 }).add;
-)
 
-Synth(\letter, [\letter, 24, \out, ~audioBus1]);
-x = Synth(\letter, [\letter, 25, \out, 0, \freq, 55]);
-x.set(\trig, 0);
 
-Pbind.new(
-	\instrument, \letter,
-	\out, ~audioBus1,
-	\letter, (Pseq([0, 1, 17, 14], inf)),
-	// \rate, (Prand([0.5, 0.75, 1], inf))
-).play;
+// Synth(\letter, [\letter, 24, \out, ~audioBus1]);
+// x = Synth(\letter, [\letter, 25, \out, 0, \freq, 55]);
+// x.set(\trig, 0);
 
 // FFT SynthDef
-// Use local buffers?
 
-(
+
 SynthDef(\transform, {
 	|inbus = 4, out = 5, amp, freezeRate = 1, shift = 1|
 	var chain, fftBuf, input;
@@ -85,9 +86,7 @@ SynthDef(\transform, {
 	// chain = PV_PhaseShift(chain, 90, 1);
 	Out.ar(out, IFFT(chain));
 }).add;
-)
 
-(
 SynthDef(\reverb, {
 	|inbus = 5, out = 0, amp, dw = 0.5|
 	var sig;
@@ -95,25 +94,17 @@ SynthDef(\reverb, {
 	sig = FreeVerb.ar(sig, mix: dw)!2;
 	Out.ar(out, sig);
 }).add;
-)
 
-// s.plotTree;
-// ~fftTransformer = Synth(\transform);
+s.plotTree;
 
 // ** //
 
 // GUI for accepting text input
-
-(
-
-// Make lookup table for parsing string to bufnums...
 // EXLPICITLY ONLY WORKS WITH ALPHABETICAL CHARS
-// LOWER / UPERCASES...
-// background_(Color.new(0.25,0.25,0.25,0.90))).
 
 ~fftTransformer.free;
 ~fftTransformer = Synth(\transform, [\out, ~audioBus2]);
-~reverbBus.free;
+ ~reverbBus.free;
 ~reverbBus = Synth(\reverb, [\dw, 0.5], addAction: 'addToTail');
 
 ~alphabet = "abcdefghijklmnopqrstuvwxyz";
@@ -135,7 +126,7 @@ SynthDef(\reverb, {
 // How do I write evaluation for multiple truthiness?
 
 Window.closeAll;
-~bgImage = Image.open("/Users/xarch/Projekt/02_Komposition/fft_ui.png"); // Make file relative to project root
+~bgImage = Image.open(File.getcwd ++ "/images/gui.png"); // Make file relative to project root
 ~bgImage.bounds;
 ~mainWindow = ~bgImage.plot("Text", Rect(400, 200, 800, 600), showInfo: false);
 ~inputText = TextField(~mainWindow, Rect(10, 10, 780, 30))
