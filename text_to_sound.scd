@@ -5,6 +5,7 @@
 ~alphabetArray = Array.fill(~alphabet.size, {arg i, index; ~alphabet[i]});
 )
 
+
 // Unix commands to generate sound files: only for initial use
 
 (
@@ -36,9 +37,13 @@
 Buffer.freeAll;
 ~alphabet.do({
 	|item, index|
-	Buffer.readChannel(s, File.getcwd ++ "/sound files/vicki/" ++ item ++ ".aiff", channels: 0);
+	Buffer.readChannel(s, PathName(thisProcess.nowExecutingPath).pathOnly ++ "/sound files/vicki/" ++ item ++ ".aiff", channels: 0);
 });
 )
+
+File.getcwd ++ "/sound files/vicki/a.aiff";
+
+File.getcwd;
 
 // ALLOCATE BUFFNUMS TO AN ARRAY
 
@@ -126,7 +131,7 @@ s.plotTree;
 // How do I write evaluation for multiple truthiness?
 
 Window.closeAll;
-~bgImage = Image.open(File.getcwd ++ "/images/gui.png"); // Make file relative to project root
+~bgImage = Image.open(PathName(thisProcess.nowExecutingPath).pathOnly ++ "/images/gui.png"); // Make file relative to project root
 ~bgImage.bounds;
 ~mainWindow = ~bgImage.plot("Text", Rect(400, 200, 800, 600), showInfo: false);
 ~inputText = TextField(~mainWindow, Rect(10, 10, 780, 30))
@@ -181,6 +186,8 @@ Window.closeAll;
 			});
 
 		});
+		1.wait;
+		{~inputButton.value_(0)}.defer;
 	});
 
 	~routineMain.play;
